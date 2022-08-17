@@ -1,3 +1,4 @@
 export enum Screens {
-  APP = 'App',
+  MAIN_MENU = 'MainMenu',
+  AGAINST_PLAYER = 'AgainstPlayer',
 }

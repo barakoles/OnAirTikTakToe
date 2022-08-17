@@ -9,7 +9,7 @@ export const AppStack: LayoutStack = {
   children: [
     {
       component: {
-        name: Screens.APP,
+        name: Screens.MAIN_MENU,
         options: {
           statusBar: {
             style: 'dark',
