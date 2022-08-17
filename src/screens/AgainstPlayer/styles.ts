@@ -11,12 +11,27 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
   },
+  top: {
+    borderTopWidth: 0,
+  },
+  bottom: {
+    borderBottomWidth: 0,
+  },
+  left: {
+    borderLeftWidth: 0,
+  },
+  right: {
+    borderRightWidth: 0,
+  },
   icon: {
     flex: 1,
     textAlign: 'center',
     textAlignVertical: 'center',
     fontSize: 60,
     color: 'black',
+  },
+  row: {
+    flexDirection: 'row',
   },
 });
 

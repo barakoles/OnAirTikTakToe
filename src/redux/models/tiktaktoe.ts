@@ -100,6 +100,16 @@ export const tikTakToe = createModel<RootModel>()({
         board: payload,
       };
     },
+    resetBoard(state) {
+      return {
+        ...state,
+        board: [
+          [0, 0, 0],
+          [0, 0, 0],
+          [0, 0, 0],
+        ],
+      };
+    },
     setWinner(state, payload) {
       return {
         ...state,
