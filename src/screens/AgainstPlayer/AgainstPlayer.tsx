@@ -5,15 +5,18 @@ import { useReduxState } from '@hooks/useReduxState';
 import { useDispatch } from 'react-redux';
 import { Dispatch } from '@redux/store';
 import styles from './styles';
+import Button from '@components/Button';
+import { Navigation } from 'react-native-navigation';
 
 interface AgainstPlayerProps {
   componentId: string;
 }
 
-const AgainstPlayerTikTakToe: React.FC<AgainstPlayerProps> = ({}) => {
-  const { board, gameOver, currentPlayer, draw, winnerLine } = useReduxState(
-    state => state.tikTakToe,
-  );
+const AgainstPlayerTikTakToe: React.FC<AgainstPlayerProps> = ({
+  componentId,
+}) => {
+  const { board, gameOver, currentPlayer, draw, winnerLine, winner } =
+    useReduxState(state => state.tikTakToe);
   const dispatch = useDispatch<Dispatch>();
   const icons = {
     x: <Text style={styles.icon}>X</Text>,
@@ -81,13 +84,13 @@ const AgainstPlayerTikTakToe: React.FC<AgainstPlayerProps> = ({}) => {
     [board, icons.o, icons.x],
   );
   const renderCurrentPlayer = React.useCallback(() => {
-    if (currentPlayer === 1) {
-      return <Text style={styles.currentPlayerText}>Current Player: X</Text>;
-    } else if (currentPlayer === -1) {
-      return <Text style={styles.currentPlayerText}>Current Player: O</Text>;
+    if (currentPlayer === 1 && !gameOver) {
+      return <Text style={styles.currentPlayerText}>X's turn</Text>;
+    } else if (currentPlayer === -1 && !gameOver) {
+      return <Text style={styles.currentPlayerText}>O's turn</Text>;
     }
     return null;
-  }, [currentPlayer]);
+  }, [currentPlayer, gameOver]);
 
   const renderBoard = React.useCallback(() => {
     return board.map((row: number[], rowIndex: number) => {
@@ -107,12 +110,56 @@ const AgainstPlayerTikTakToe: React.FC<AgainstPlayerProps> = ({}) => {
       );
     });
   }, [board, currentIcon, decideTileStyles, onTilePress]);
-
+  const renderGameOverText = () => {
+    if (gameOver && winner === 1) {
+      return <Text style={styles.currentPlayerText}>X won!</Text>;
+    } else if (gameOver && winner === -1) {
+      return <Text style={styles.currentPlayerText}>O won!</Text>;
+    }
+  };
+  const goBack = () => {
+    Navigation.pop(componentId);
+  };
+  const reset = () => {
+    dispatch.tikTakToe.resetGame();
+  };
   return (
     <>
+      <Button
+        textValue="Go Back"
+        onPress={goBack}
+        width={80}
+        // @ts-ignore
+        containerStyle={[styles.headerButtons, { left: 20 }]}
+        textStyle={styles.headerButtonTexts}
+      />
+      {gameOver ? (
+        <Button
+          textValue="Play Again"
+          onPress={reset}
+          width={80}
+          // @ts-ignore
+          containerStyle={[styles.headerButtons, { right: 20 }]}
+          textStyle={styles.headerButtonTexts}
+        />
+      ) : (
+        <Button
+          textValue="Reset"
+          onPress={reset}
+          width={80}
+          // @ts-ignore
+          containerStyle={[styles.headerButtons, { right: 20 }]}
+          textStyle={styles.headerButtonTexts}
+        />
+      )}
       <View style={styles.container}>
-        {renderCurrentPlayer()}
+        <View style={styles.currentPlayerContainer}>
+          {renderCurrentPlayer()}
+        </View>
         {renderBoard()}
+        <View style={styles.currentPlayerContainer}>
+          {renderGameOverText()}
+        </View>
       </View>
     </>
   );

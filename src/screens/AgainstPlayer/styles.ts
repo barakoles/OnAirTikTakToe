@@ -1,3 +1,4 @@
+import { fontFamilies, themeColors } from '@shared/vars';
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
@@ -31,6 +32,10 @@ const styles = StyleSheet.create({
   },
   currentPlayerText: {
     fontSize: 20,
+    fontFamily: fontFamilies.bold,
+  },
+  currentPlayerContainer: {
+    marginVertical: 20,
   },
   icon: {
     flex: 1,
@@ -41,6 +46,19 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+  },
+  headerButtons: {
+    position: 'absolute',
+    zIndex: 1,
+    top: 40,
+    backgroundColor: themeColors.primaryMidtone,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 40,
+    borderRadius: 20,
+  },
+  headerButtonTexts: {
+    fontFamily: fontFamilies.bold,
   },
 });
 

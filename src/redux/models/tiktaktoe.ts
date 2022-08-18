@@ -147,6 +147,11 @@ export const tikTakToe = createModel<RootModel>()({
         ],
       };
     },
+    resetGame() {
+      return {
+        ...initialState,
+      };
+    },
     setWinner(state, payload) {
       return {
         ...state,

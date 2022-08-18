@@ -5,15 +5,16 @@ import { useReduxState } from '@hooks/useReduxState';
 import { useDispatch } from 'react-redux';
 import { Dispatch } from '@redux/store';
 import styles from './styles';
+import Button from '@components/Button';
+import { Navigation } from 'react-native-navigation';
 
 interface AgainstAIProps {
   componentId: string;
 }
 
-const AgainstAITikTakToe: React.FC<AgainstAIProps> = ({}) => {
-  const { board, gameOver, currentPlayer, winner, draw } = useReduxState(
-    state => state.tikTakToe,
-  );
+const AgainstAITikTakToe: React.FC<AgainstAIProps> = ({ componentId }) => {
+  const { board, gameOver, currentPlayer, draw, winnerLine, winner } =
+    useReduxState(state => state.tikTakToe);
   const dispatch = useDispatch<Dispatch>();
   const icons = {
     x: <Text style={styles.icon}>X</Text>,
@@ -61,7 +62,10 @@ const AgainstAITikTakToe: React.FC<AgainstAIProps> = ({}) => {
         tileStyles = { ...tileStyles, ...styles.right };
       }
       // in case there is a winner, highlight the winning tiles
-      if (gameOver && board[row][col] === winner) {
+      const isWinnerLine = (winnerLine || []).find(el => {
+        return el[0] === row && el[1] === col;
+      });
+      if (gameOver && isWinnerLine) {
         tileStyles = { ...tileStyles, ...styles.winningTile };
       }
       // in case there is a tie, highlight the winning tiles
@@ -70,7 +74,7 @@ const AgainstAITikTakToe: React.FC<AgainstAIProps> = ({}) => {
       }
       return tileStyles;
     },
-    [board, draw, gameOver, winner],
+    [draw, gameOver, winnerLine],
   );
   const currentIcon = React.useCallback(
     (row: number, col: number) => {
@@ -85,13 +89,13 @@ const AgainstAITikTakToe: React.FC<AgainstAIProps> = ({}) => {
     [board, icons.o, icons.x],
   );
   const renderCurrentPlayer = React.useCallback(() => {
-    if (currentPlayer === 1) {
-      return <Text style={styles.currentPlayerText}>Current Player: X</Text>;
+    if (currentPlayer === 1 && !gameOver) {
+      return <Text style={styles.currentPlayerText}>X's turn</Text>;
     } else if (currentPlayer === -1) {
-      return <Text style={styles.currentPlayerText}>Current Player: O</Text>;
+      return <Text style={styles.currentPlayerText}>O's turn</Text>;
     }
     return null;
-  }, [currentPlayer]);
+  }, [currentPlayer, gameOver]);
 
   const renderBoard = React.useCallback(() => {
     return board.map((row: number[], rowIndex: number) => {
@@ -111,12 +115,56 @@ const AgainstAITikTakToe: React.FC<AgainstAIProps> = ({}) => {
       );
     });
   }, [board, currentIcon, decideTileStyles, onTilePress]);
-
+  const renderGameOverText = () => {
+    if (gameOver && winner === 1) {
+      return <Text style={styles.currentPlayerText}>X won!</Text>;
+    } else if (gameOver && winner === -1) {
+      return <Text style={styles.currentPlayerText}>O won!</Text>;
+    }
+  };
+  const goBack = () => {
+    Navigation.pop(componentId);
+  };
+  const reset = () => {
+    dispatch.tikTakToe.resetGame();
+  };
   return (
     <>
+      <Button
+        textValue="Go Back"
+        onPress={goBack}
+        width={80}
+        // @ts-ignore
+        containerStyle={[styles.headerButtons, { left: 20 }]}
+        textStyle={styles.headerButtonTexts}
+      />
+      {gameOver ? (
+        <Button
+          textValue="Play Again"
+          onPress={reset}
+          width={80}
+          // @ts-ignore
+          containerStyle={[styles.headerButtons, { right: 20 }]}
+          textStyle={styles.headerButtonTexts}
+        />
+      ) : (
+        <Button
+          textValue="Reset"
+          onPress={reset}
+          width={80}
+          // @ts-ignore
+          containerStyle={[styles.headerButtons, { right: 20 }]}
+          textStyle={styles.headerButtonTexts}
+        />
+      )}
       <View style={styles.container}>
-        {renderCurrentPlayer()}
+        <View style={styles.currentPlayerContainer}>
+          {renderCurrentPlayer()}
+        </View>
         {renderBoard()}
+        <View style={styles.currentPlayerContainer}>
+          {renderGameOverText()}
+        </View>
       </View>
     </>
   );
