@@ -1,10 +1,11 @@
 import { createModel } from '@rematch/core';
 import type { RootModel } from './index';
-
+type Player = 1 | -1;
 type TikTakToeState = {
   board: any[];
-  currentPlayer: number;
+  currentPlayer: Player;
   winner: number;
+  winnerLine: false | number[][];
   gameOver: boolean;
   round: number;
   draw: boolean;
@@ -18,9 +19,68 @@ const initialState: TikTakToeState = {
   ],
   currentPlayer: 1,
   winner: 0,
+  winnerLine: false,
   gameOver: false,
   draw: false,
   round: 0,
+};
+const checkColumns = (
+  board: number[][],
+  currentPlayer: 1 | -1,
+  tilesStreak = 3,
+) => {
+  for (let i = 0; i < 3; i++) {
+    // Logic can be altered to increase number of rows & columns
+    let sum = board[0][i] + board[1][i] + board[2][i];
+    if (sum === tilesStreak * currentPlayer) {
+      return [
+        [0, i, board[0][i]], // This returns a more detailed array of the winning line
+        [1, i, board[1][i]],
+        [2, i, board[2][i]],
+      ];
+    }
+  }
+  return false;
+};
+const checkRows = (
+  board: number[][],
+  currentPlayer: 1 | -1,
+  tilesStreak = 3,
+) => {
+  for (let row = 0; row < 3; row++) {
+    let sum = board[row][0] + board[row][1] + board[row][2];
+    if (sum === tilesStreak * currentPlayer) {
+      return [
+        [row, 0, board[row][0]],
+        [row, 1, board[row][1]],
+        [row, 2, board[row][2]],
+      ];
+    }
+  }
+  return false;
+};
+const checkDiagonals = (
+  board: number[][],
+  currentPlayer: 1 | -1,
+  tilesStreak = 3,
+) => {
+  let sumDiagonal = board[0][0] + board[1][1] + board[2][2];
+  let sumAntiDiagonal = board[2][0] + board[1][1] + board[0][2];
+  if (sumDiagonal === tilesStreak * currentPlayer) {
+    return [
+      [0, 0, board[0][0]],
+      [1, 1, board[1][1]],
+      [2, 2, board[2][2]],
+    ];
+  }
+  if (sumAntiDiagonal === tilesStreak * currentPlayer) {
+    return [
+      [2, 0, board[2][0]],
+      [1, 1, board[1][1]],
+      [0, 2, board[0][2]],
+    ];
+  }
+  return false;
 };
 
 export const tikTakToe = createModel<RootModel>()({
@@ -44,48 +104,15 @@ export const tikTakToe = createModel<RootModel>()({
     },
     checkWinner(state) {
       const { board, currentPlayer, round, winner } = state;
-
-      const tilesStreak = 3;
-      const checkColumns = () => {
-        for (let i = 0; i < tilesStreak; i++) {
-          let sum = board[0][i] + board[1][i] + board[2][i];
-          if (sum === 3) {
-            return 1;
-          } else if (sum === -3) {
-            return -1;
-          }
-          return false;
-        }
-      };
-      const checkRows = () => {
-        for (let row = 0; row < 3; row++) {
-          let sum = board[row][0] + board[row][1] + board[row][2];
-          if (sum === 3) {
-            return 1;
-          }
-          if (sum === -3) {
-            return -1;
-          }
-        }
-        return false;
-      };
-      const checkDiagonals = () => {
-        let sumDiagonal = board[0][0] + board[1][1] + board[2][2];
-        let sumAntiDiagonal = board[2][0] + board[1][1] + board[0][2];
-
-        if (sumDiagonal === 3 || sumAntiDiagonal === 3) {
-          return 1;
-        }
-        if (sumDiagonal === -3 || sumAntiDiagonal === -3) {
-          return -1;
-        }
-        return false;
-      };
-      if (checkColumns() || checkRows() || checkDiagonals()) {
+      const winnerColumn = checkColumns(board, currentPlayer);
+      const winnerRow = checkRows(board, currentPlayer);
+      const winnerDiagonal = checkDiagonals(board, currentPlayer);
+      if (!!winnerColumn || !!winnerRow || !!winnerDiagonal) {
         return {
           ...state,
           gameOver: true,
           winner: currentPlayer === 1 ? 1 : -1,
+          winnerLine: winnerColumn || winnerRow || winnerDiagonal,
         };
       }
       if (round === 9 && winner === 0) {
@@ -97,6 +124,7 @@ export const tikTakToe = createModel<RootModel>()({
         };
       }
     },
+
     updatePlayer(state, payload) {
       return {
         ...state,
@@ -132,4 +160,66 @@ export const tikTakToe = createModel<RootModel>()({
       };
     },
   },
+  effects: dispatch => ({
+    async aiPlays(_, state) {
+      const { board } = state.tikTakToe;
+      // verify if AI can win
+      const verify = (currentPlayer: 1 | -1) => {
+        const winColumn = checkColumns(board, currentPlayer, 2);
+        const winRow = checkRows(board, currentPlayer, 2);
+        const winDiagonal = checkDiagonals(board, currentPlayer, 2);
+        if (winColumn) {
+          const column = winColumn.find(([_row, _col, tile]) => {
+            return tile === 0;
+          })!;
+
+          dispatch.tikTakToe.updateBoard({
+            row: column[0],
+            col: column[1],
+          });
+          return true;
+        }
+        if (winRow) {
+          const row = winRow.find(([_row, _col, tile]) => {
+            return tile === 0;
+          })!;
+
+          dispatch.tikTakToe.updateBoard({ row: row[0], col: row[1] });
+          return true;
+        }
+        if (winDiagonal) {
+          const diagonal = winDiagonal.find(([_row, _col, tile]) => {
+            return tile === 0;
+          })!;
+
+          dispatch.tikTakToe.updateBoard({
+            row: diagonal[0],
+            col: diagonal[1],
+          });
+          return true;
+        }
+        return false;
+      };
+      // Verify if player can win
+      const aiWin = verify(-1);
+      if (aiWin) {
+        return;
+      }
+      const playerWin = verify(1);
+      if (playerWin) {
+        return;
+      }
+      // Play randomly
+      const random = () => {
+        const row = Math.floor(Math.random() * 3);
+        const col = Math.floor(Math.random() * 3);
+        if (board[row][col] === 0) {
+          dispatch.tikTakToe.updateBoard({ row, col });
+        } else {
+          random();
+        }
+      };
+      random();
+    },
+  }),
 });

@@ -17,10 +17,18 @@ const MainMenu: React.FC<MainMenuProps> = ({ componentId }) => {
       },
     });
   };
+  const goToAgainstAIScreen = () => {
+    Navigation.push(componentId, {
+      component: {
+        name: Screens.AGAINST_AI,
+      },
+    });
+  };
   return (
     <>
       <View style={styles.container}>
         <Button title="Against Player" onPress={goToAgainstPlayerScreen} />
+        <Button title="Against AI" onPress={goToAgainstAIScreen} />
       </View>
     </>
   );
