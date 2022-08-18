@@ -23,6 +23,15 @@ const styles = StyleSheet.create({
   right: {
     borderRightWidth: 0,
   },
+  winningTile: {
+    backgroundColor: 'green',
+  },
+  drawTile: {
+    backgroundColor: 'orange',
+  },
+  currentPlayerText: {
+    fontSize: 20,
+  },
   icon: {
     flex: 1,
     textAlign: 'center',

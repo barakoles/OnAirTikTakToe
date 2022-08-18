@@ -1,18 +1,17 @@
 /* eslint-disable react-native/no-inline-styles */
 import { Text, TouchableOpacity, View } from 'react-native';
 import React from 'react';
-
-import styles from './styles';
 import { useReduxState } from '@hooks/useReduxState';
 import { useDispatch } from 'react-redux';
 import { Dispatch } from '@redux/store';
+import styles from './styles';
 
 interface AgainstPlayerProps {
   componentId: string;
 }
 
 const AgainstPlayerTikTakToe: React.FC<AgainstPlayerProps> = ({}) => {
-  const { board, gameOver, currentPlayer, winner } = useReduxState(
+  const { board, gameOver, currentPlayer, winner, draw } = useReduxState(
     state => state.tikTakToe,
   );
   const dispatch = useDispatch<Dispatch>();
@@ -38,23 +37,34 @@ const AgainstPlayerTikTakToe: React.FC<AgainstPlayerProps> = ({}) => {
     [board, currentPlayer, dispatch.tikTakToe, gameOver],
   );
 
-  const decideTileStyles = (row: number, col: number) => {
-    let tileStyles = styles.tile;
-    if (row === 0) {
-      tileStyles = { ...tileStyles, ...styles.top };
-    }
-    if (row === 2) {
-      // this can be changed to the length of the board - 1 in case logic needs to be expanded
-      tileStyles = { ...tileStyles, ...styles.bottom };
-    }
-    if (col === 0) {
-      tileStyles = { ...tileStyles, ...styles.left };
-    }
-    if (col === 2) {
-      tileStyles = { ...tileStyles, ...styles.right };
-    }
-    return tileStyles;
-  };
+  const decideTileStyles = React.useCallback(
+    (row: number, col: number) => {
+      let tileStyles = styles.tile;
+      if (row === 0) {
+        tileStyles = { ...tileStyles, ...styles.top };
+      }
+      if (row === 2) {
+        // this can be changed to the length of the board - 1 in case logic needs to be expanded
+        tileStyles = { ...tileStyles, ...styles.bottom };
+      }
+      if (col === 0) {
+        tileStyles = { ...tileStyles, ...styles.left };
+      }
+      if (col === 2) {
+        tileStyles = { ...tileStyles, ...styles.right };
+      }
+      // in case there is a winner, highlight the winning tiles
+      if (gameOver && board[row][col] === winner) {
+        tileStyles = { ...tileStyles, ...styles.winningTile };
+      }
+      // in case there is a tie, highlight the winning tiles
+      if (draw) {
+        tileStyles = { ...tileStyles, ...styles.drawTile };
+      }
+      return tileStyles;
+    },
+    [board, draw, gameOver, winner],
+  );
   const currentIcon = React.useCallback(
     (row: number, col: number) => {
       const tile = board[row][col];
@@ -67,6 +77,14 @@ const AgainstPlayerTikTakToe: React.FC<AgainstPlayerProps> = ({}) => {
     },
     [board, icons.o, icons.x],
   );
+  const renderCurrentPlayer = React.useCallback(() => {
+    if (currentPlayer === 1) {
+      return <Text style={styles.currentPlayerText}>Current Player: X</Text>;
+    } else if (currentPlayer === -1) {
+      return <Text style={styles.currentPlayerText}>Current Player: O</Text>;
+    }
+    return null;
+  }, [currentPlayer]);
 
   const renderBoard = React.useCallback(() => {
     return board.map((row: number[], rowIndex: number) => {
@@ -85,11 +103,14 @@ const AgainstPlayerTikTakToe: React.FC<AgainstPlayerProps> = ({}) => {
         </View>
       );
     });
-  }, [board, currentIcon, onTilePress]);
+  }, [board, currentIcon, decideTileStyles, onTilePress]);
 
   return (
     <>
-      <View style={styles.container}>{renderBoard()}</View>
+      <View style={styles.container}>
+        {renderCurrentPlayer()}
+        {renderBoard()}
+      </View>
     </>
   );
 };

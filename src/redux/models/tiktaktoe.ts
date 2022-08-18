@@ -4,8 +4,10 @@ import type { RootModel } from './index';
 type TikTakToeState = {
   board: any[];
   currentPlayer: number;
-  winner: string;
+  winner: number;
   gameOver: boolean;
+  round: number;
+  draw: boolean;
 };
 
 const initialState: TikTakToeState = {
@@ -15,8 +17,10 @@ const initialState: TikTakToeState = {
     [0, 0, 0],
   ],
   currentPlayer: 1,
-  winner: '',
+  winner: 0,
   gameOver: false,
+  draw: false,
+  round: 0,
 };
 
 export const tikTakToe = createModel<RootModel>()({
@@ -34,11 +38,12 @@ export const tikTakToe = createModel<RootModel>()({
       });
       return {
         ...state,
+        round: state.round + 1,
         board: newBoard,
       };
     },
     checkWinner(state) {
-      const { board, currentPlayer } = state;
+      const { board, currentPlayer, round, winner } = state;
 
       const tilesStreak = 3;
       const checkColumns = () => {
@@ -80,13 +85,17 @@ export const tikTakToe = createModel<RootModel>()({
         return {
           ...state,
           gameOver: true,
-          winner: currentPlayer === 1 ? 'Player 1' : 'Player 2',
+          winner: currentPlayer === 1 ? 1 : -1,
         };
       }
-      return {
-        ...state,
-        winner: '',
-      };
+      if (round === 9 && winner === 0) {
+        return {
+          ...state,
+          gameOver: true,
+          draw: true,
+          winner: 0,
+        };
+      }
     },
     updatePlayer(state, payload) {
       return {

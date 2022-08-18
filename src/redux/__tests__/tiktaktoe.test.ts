@@ -29,7 +29,7 @@ describe('tiktaktoe store', () => {
       store.dispatch.tikTakToe.checkWinner();
       const myModelData = store.getState().tikTakToe.winner;
 
-      expect(myModelData).toStrictEqual('Player 1');
+      expect(myModelData).toStrictEqual(1);
     });
     it('gameOver should change', () => {
       const store = init<RootModel>({
